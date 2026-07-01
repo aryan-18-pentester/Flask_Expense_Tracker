@@ -31,11 +31,11 @@ class Entry(db.Model):
     user_id    = db.Column(db.Integer, nullable=False)   # links to User.id in users.db
  
     # two string fields -- rename to match your data
-    string_one = db.Column(db.String(200), nullable=False)
-    string_two = db.Column(db.String(200), nullable=False)
+    category = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.String(200), nullable=False)
  
     # one number field -- rename to match your data
-    number_one = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
  
     # add more columns here if needed
 
@@ -92,9 +92,9 @@ def expenses():
     if request.method == 'POST':
  
         # read the three fields the user typed in the form
-        string_one = request.form['string_one']
-        string_two = request.form['string_two']
-        number_one = request.form['number_one']
+        category = request.form['category']
+        description = request.form['description']
+        amount = request.form['amount']
  
         # your logic goes here before saving
         # example: validate, calculate, transform the data
@@ -102,9 +102,9 @@ def expenses():
         # save to database -- user_id links this entry to whoever is logged in
         entry = Entry(
             user_id    = current_user.id,
-            string_one = string_one,
-            string_two = string_two,
-            number_one = float(number_one),   # convert string from form to number
+            category = category,
+            description = description,
+            amount = float(amount),   # convert string from form to number
         ) 
         db.session.add(entry)
         db.session.commit()
