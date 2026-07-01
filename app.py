@@ -58,6 +58,29 @@ def logout():
     return redirect(url_for('login'))
 
 
+
+#------DashBoard---------------------------------------------
+@app.route('/')
+def dashboard():
+    return render_template('dashboard.html', active='dashboard')
+ 
+ 
+@app.route('/page1')
+def page1():
+    return render_template('page1.html', active='page1')
+ 
+ 
+@app.route('/page2')
+def page2():
+    return render_template('page2.html', active='page2')
+ 
+ 
+@app.route('/page3')
+def page3():
+    return render_template('page3.html', active='page3')
+
+
+
 # ── Home (protected) ───────────────────────────────────────────────────────────
 @app.route('/')
 @login_required

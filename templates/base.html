@@ -8,6 +8,7 @@
 </head>
 <body>
 
+     <!--Login base -->
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="flash">
@@ -17,6 +18,61 @@
     {% endwith %}
 
     {% block content %}{% endblock %}
+
+
+     <!-- Dashboard -->
+    <div class="layout">
+ 
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar">
+ 
+            <div class="brand">MyApp</div>
+ 
+            <nav class="nav">
+                <!-- active class highlights the current page -->
+                <!-- 'active' variable is passed from every route in app.py -->
+ 
+                <a href="{{ url_for('dashboard') }}"
+                   class="nav-link {% if active == 'dashboard' %}active{% endif %}">
+                    Dashboard
+                </a>
+ 
+                <a href="{{ url_for('page1') }}"
+                   class="nav-link {% if active == 'page1' %}active{% endif %}">
+                    Page 1
+                </a>
+ 
+                <a href="{{ url_for('page2') }}"
+                   class="nav-link {% if active == 'page2' %}active{% endif %}">
+                    Page 2
+                </a>
+ 
+                <a href="{{ url_for('page3') }}"
+                   class="nav-link {% if active == 'page3' %}active{% endif %}">
+                    Page 3
+                </a>
+ 
+                <a href="{{ url_for('settings') }}"
+                   class="nav-link {% if active == 'settings' %}active{% endif %}">
+                    Settings
+                </a>
+            </nav>
+ 
+        </aside>
+ 
+        <!-- ── Main content area ── -->
+        <main class="main">
+ 
+            <!-- topbar -->
+            <div class="topbar">
+                <h1 class="page-title">{% block title_text %}Page{% endblock %}</h1>
+            </div>
+ 
+            <!-- page content goes here -->
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+     
 
 </body>
 </html>

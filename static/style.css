@@ -1,3 +1,4 @@
+/*Login page*/
 * {
     box-sizing: border-box;
     margin: 0;
@@ -100,3 +101,114 @@ button:hover { opacity: 0.88; }
     font-size: 0.875rem;
     text-decoration: none;
 }
+
+
+
+
+/*DashBoard*/
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    background: #F4F4F0;
+    color: #1A1A2E;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ── Full page layout: sidebar left, main right ── */
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+    width: 220px;
+    background: #1A1A2E;
+    color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    position: fixed;          /* stays in place while page scrolls */
+    top: 0;
+    left: 0;
+    height: 100vh;
+}
+
+.brand {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 36px;
+    padding-left: 8px;
+    color: #FFFFFF;
+}
+
+/* ── Nav links ── */
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-link {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #A0A8C0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.nav-link:hover {
+    background: #2A2A4A;
+    color: #FFFFFF;
+}
+
+/* highlighted when this is the current page */
+.nav-link.active {
+    background: #6C63FF;
+    color: #FFFFFF;
+    font-weight: 500;
+}
+
+/* ── Main area ── */
+.main {
+    margin-left: 220px;       /* same as sidebar width so content doesn't go under it */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Topbar ── */
+.topbar {
+    background: #FFFFFF;
+    border-bottom: 1px solid #E5E4E2;
+    padding: 20px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.page-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* ── Content area ── */
+.content {
+    padding: 32px;
+    flex: 1;
+}
+
+
+
+
+
