@@ -45,7 +45,7 @@ def login():
         user = User.query.filter_by(username=request.form['username']).first()
         if user and check_password_hash(user.password_hash, request.form['password']):
             login_user(user)
-            return redirect(url_for('home'))
+            return redirect(url_for('dashboard'))
         flash('Invalid username or password.')
     return render_template('login.html')
 
@@ -60,25 +60,36 @@ def logout():
 
 
 #------DashBoard---------------------------------------------
-@app.route('/')
+@app.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('dashboard.html', active='dashboard')
  
  
 @app.route('/page1')
+@login_required
 def page1():
     return render_template('page1.html', active='page1')
  
  
 @app.route('/page2')
+@login_required
 def page2():
     return render_template('page2.html', active='page2')
  
  
 @app.route('/page3')
+@login_required
 def page3():
     return render_template('page3.html', active='page3')
+
+#-----home-----------------------------
+@app.route('/')
+@login_required
+def home():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
 
 
 # ── Run ────────────────────────────────────────────────────────────────────────
