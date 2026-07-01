@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}expenses{% endblock %}
+{% block title_text %}expenses{% endblock %}
+
+{% block content %}
+
+<div class="card">
+ 
+    <h1>Add Entry</h1>
+ 
+    <!-- form submits POST to the home route in app.py -->
+    <form method="POST" action="{{ url_for('expenses') }}">
+ 
+        <!-- string field one -- rename label and name to match your data -->
+        <label for="category">Category</label>
+        <input type="text"
+               id="category"
+               name="category"
+               placeholder="Category"
+               required>
+ 
+        <!-- string field two -->
+        <label for="description">Description</label>
+        <input type="text"
+               id="description"
+               name="description"
+               placeholder="description"
+               required>
+ 
+        <!-- number field -->
+        <label for="amount">Amount</label>
+        <input type="number"
+               id="amount"
+               name="amount"
+               placeholder="Amount"
+               step="any"
+               required>
+ 
+        <button type="submit">Save</button>
+ 
+    </form>
+ 
+</div>
+{% endblock %}

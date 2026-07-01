@@ -23,9 +23,9 @@
                     Dashboard
                 </a>
                  
-		<a href="{{ url_for('page1') }}"
-                   class="nav-link {% if active == 'page1' %}active{% endif %}">
-                    Page 1
+		<a href="{{ url_for('expenses') }}"
+                   class="nav-link {% if active == 'expenses' %}active{% endif %}">
+                    expenses
                 </a>
 
                 <a href="{{ url_for('page2') }}"
@@ -48,6 +48,12 @@
             <!-- topbar -->
             <div class="topbar">
                 <h1 class="page-title">{% block title_text %}Page{% endblock %}</h1>
+                <span class="brand">App</span>
+            <nav>
+              <span class="topbar-user">{{ current_user.username }}</span>
+              <a href="{{ url_for('logout') }}">Log out</a>
+            </nav>
+ 
             </div>
 
             <!-- page content goes here -->

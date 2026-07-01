@@ -7,6 +7,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_BINDS'] = {
+    'users_db' : 'sqlite:///users.db',    # first database  → users.db
+    'data_db'  : 'sqlite:///data.db',     # second database → data.db
+}
 db = SQLAlchemy(app)
 
 login_manager = LoginManager(app)
@@ -19,6 +23,21 @@ class User(UserMixin, db.Model):
     username      = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
 
+# ── Entry model → saved in data.db ────────────────────────────────────────────
+class Entry(db.Model):
+    __bind_key__ = 'data_db'              # tells SQLAlchemy: put this table in data.db
+ 
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, nullable=False)   # links to User.id in users.db
+ 
+    # two string fields -- rename to match your data
+    string_one = db.Column(db.String(200), nullable=False)
+    string_two = db.Column(db.String(200), nullable=False)
+ 
+    # one number field -- rename to match your data
+    number_one = db.Column(db.Float, nullable=False)
+ 
+    # add more columns here if needed
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -66,10 +85,35 @@ def dashboard():
     return render_template('dashboard.html', active='dashboard')
  
  
-@app.route('/page1')
+@app.route('/expenses',methods=['GET', 'POST'])
 @login_required
-def page1():
-    return render_template('page1.html', active='page1')
+def expenses():                     
+    #return render_template('expenses.html', active='expenses')
+    if request.method == 'POST':
+ 
+        # read the three fields the user typed in the form
+        string_one = request.form['string_one']
+        string_two = request.form['string_two']
+        number_one = request.form['number_one']
+ 
+        # your logic goes here before saving
+        # example: validate, calculate, transform the data
+ 
+        # save to database -- user_id links this entry to whoever is logged in
+        entry = Entry(
+            user_id    = current_user.id,
+            string_one = string_one,
+            string_two = string_two,
+            number_one = float(number_one),   # convert string from form to number
+        ) 
+        db.session.add(entry)
+        db.session.commit()
+ 
+        return redirect(url_for('dashboard'))
+    return render_template('expenses.html', active='expenses')
+    # fetch only this user's entries
+    entries = Entry.query.filter_by(user_id=current_user.id).all()
+    return render_template('dashboard.html', entries=entries)
  
  
 @app.route('/page2')
