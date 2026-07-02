@@ -109,13 +109,37 @@ def expenses():
         db.session.add(entry)
         db.session.commit()
  
-        return redirect(url_for('dashboard'))
-    return render_template('expenses.html', active='expenses')
+        return redirect(url_for('expenses'))
+        #return render_template('expenses.html', active='expenses')
     # fetch only this user's entries
     entries = Entry.query.filter_by(user_id=current_user.id).all()
-    return render_template('dashboard.html', entries=entries)
- 
- 
+    return render_template('expenses.html', active='expenses',entries=entries)
+
+
+#----------edit -------------------------------
+@app.route('/expenses/edit/<int:entry_id>', methods=['GET','POST'])
+@login_required
+def edit_expense(entry_id):
+
+    entry = Entry.query.get_or_404(entry_id)
+
+    if entry.user_id != current_user.id:
+        flash("Unauthorized")
+        return redirect(url_for("edit_expense"))
+    if request.method == "POST":
+        entry.category = request.form["category"]
+        entry.description = request.form["description"]
+        entry.amount = float(request.form["amount"])
+
+        db.session.commit()
+
+        flash("Expense updated successfully.")
+
+        return redirect(url_for("expenses"))
+    return render_template("edit_expense.html", entry=entry)
+
+
+
 @app.route('/page2')
 @login_required
 def page2():

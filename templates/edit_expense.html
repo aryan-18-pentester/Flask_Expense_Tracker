@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h2>Edit Expense</h2>
+
+    <form method="POST"
+          action="{{ url_for('edit_expense', entry_id=entry.id) }}">
+
+        <label>Category</label>
+        <input type="text"
+               name="category"
+               value="{{ entry.category }}"
+               required>
+
+        <label>Description</label>
+        <input type="text"
+               name="description"
+               value="{{ entry.description }}"
+               required>
+
+        <label>Amount</label>
+        <input type="number"
+               name="amount"
+               value="{{ entry.amount }}"
+               step="any"
+               required>
+
+        <br><br>
+
+        <button type="submit">
+            Update Expense
+        </button>
+
+        <a href="{{ url_for('expenses') }}">
+            Cancel
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}
