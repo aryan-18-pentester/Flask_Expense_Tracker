@@ -71,6 +71,12 @@
             Edit
         </a>
     </td>
+               <td>
+ 
+                    <a href="{{ url_for('delete', entry_id=entry.id) }}"
+                       onclick="return confirm('Delete this entry?')">Delete</a>
+                </td>
+ 
             </tr>
             {% endfor %}
         </tbody>

@@ -138,7 +138,16 @@ def edit_expense(entry_id):
         return redirect(url_for("expenses"))
     return render_template("edit_expense.html", entry=entry)
 
-
+#------------delete---------------
+@app.route('/delete/<int:entry_id>')
+@login_required
+def delete(entry_id):
+    entry = Entry.query.get_or_404(entry_id)
+    if entry.user_id == current_user.id:
+        db.session.delete(entry)
+        db.session.commit()
+    return redirect(url_for('expenses'))
+ 
 
 @app.route('/page2')
 @login_required
