@@ -2,6 +2,8 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import func
+
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -82,7 +84,30 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', active='dashboard')
+    
+     entries = Entry.query.filter_by(user_id=current_user.id).all()
+ 
+    # calculate stats from the number_one column for this user only
+     stats = db.session.query(
+        func.count(Entry.amount),    # total count of entries
+        func.sum(Entry.amount),      # sum of all numbers
+        func.avg(Entry.amount),      # average
+        func.max(Entry.amount),      # highest
+        func.min(Entry.amount),      # lowest
+    ).filter(Entry.user_id == current_user.id).one()
+ 
+    # unpack into named variables -- if no entries yet all values will be None
+     total_count  = stats[0] or 0
+     total_sum    = round(stats[1], 2) if stats[1] else 0
+     average      = round(stats[2], 2) if stats[2] else 0
+     highest      = stats[3] or 0
+     lowest       = stats[4] or 0
+     return render_template('dashboard.html', entries=entries,
+                           total_count=total_count,
+                           total_sum=total_sum,
+                           average=average,
+                           highest=highest,
+                           lowest=lowest ,active='dashboard')
  
  
 @app.route('/expenses',methods=['GET', 'POST'])
