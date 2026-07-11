@@ -174,10 +174,43 @@ def delete(entry_id):
     return redirect(url_for('expenses'))
  
 
-@app.route('/page2')
+
+# ---------- SEARCH ROUTE (BOILERPLATE) ----------
+@app.route('/search', methods=['GET'])
 @login_required
-def page2():
-    return render_template('page2.html', active='page2')
+def search():
+    # 1. Get the 3 search inputs from the URL (default to empty/None)
+    amount = request.args.get('amount', type=int)  # Your 1 numeric input
+    category = request.args.get('category', '').strip()  # Your 1st string
+    description = request.args.get('description', '').strip()  # Your 2nd string
+
+    # 2. Fetch your data (REPLACE THIS with your actual data source)
+    # If you use a database (e.g., SQLAlchemy), replace the line below with:
+    all_data = Entry.query.all()
+
+    # 3. Apply filters (case-insensitive for strings)
+    results = all_data
+
+    # Filter by Numeric (example: exact match on 'price')
+    if amount is not None:
+        results = [item for item in results if item.amount == amount]
+
+    # Filter by 1st String (example: search in 'name')
+    if category:
+        results = [item for item in results if category.lower() in item.category.lower()]
+
+    # Filter by 2nd String (example: search in 'category')
+    if description:
+        results = [item for item in results if description.lower() in item.description.lower()]
+
+    # 4. Render the template (pass the results and the current search values back)
+    return render_template(
+        'search.html',  # <-- CHANGE THIS to your existing HTML file name
+        results=results,
+        amount=amount,
+        category=category,
+        description=description
+    )
  
  
 @app.route('/page3')

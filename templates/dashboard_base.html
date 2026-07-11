@@ -27,6 +27,10 @@
                    class="nav-link {% if active == 'expenses' %}active{% endif %}">
                     expenses
                 </a>
+                <a href="{{ url_for('search') }}"
+class="nav-link {% if active == 'expenses' %}act    ive{% endif %}">
+Search</a>
+
             </nav>
 
         </aside>
@@ -41,6 +45,7 @@
             <nav>
               <span class="topbar-user">{{ current_user.username }}</span>
               <a href="{{ url_for('logout') }}">Log out</a>
+
             </nav>
  
             </div>
