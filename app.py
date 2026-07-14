@@ -174,44 +174,59 @@ def delete(entry_id):
     return redirect(url_for('expenses'))
  
 
-
-# ---------- SEARCH ROUTE (BOILERPLATE) ----------
 @app.route('/search', methods=['GET'])
-@login_required
 def search():
-    # 1. Get the 3 search inputs from the URL (default to empty/None)
-    amount = request.args.get('amount', type=int)  # Your 1 numeric input
-    category = request.args.get('category', '').strip()  # Your 1st string
-    description = request.args.get('description', '').strip()  # Your 2nd string
+    # --- 1. Read all parameters (existing + new) ---
+    amount = request.args.get('amount', type=int)
+    category = request.args.get('category', '').strip()
+    description = request.args.get('description', '').strip()
+            
+    price_min = request.args.get('price_min', type=int)
+    price_max = request.args.get('price_max', type=int)
+    category_filter = request.args.get('category_filter', '').strip()
+    #in_stock = request.args.get('in_stock') == '1'
+    print(request.args)
+    # --- 2. Build the base query ---
+    query = Entry.query   # replace `Item` with your actual model name
 
-    # 2. Fetch your data (REPLACE THIS with your actual data source)
-    # If you use a database (e.g., SQLAlchemy), replace the line below with:
-    all_data = Entry.query.all()
-
-    # 3. Apply filters (case-insensitive for strings)
-    results = all_data
-
-    # Filter by Numeric (example: exact match on 'price')
+    # --- 3. Apply existing filters ---
     if amount is not None:
-        results = [item for item in results if item.amount == amount]
+        query = query.filter(Entry.amount == amount)   # adjust field name
 
-    # Filter by 1st String (example: search in 'name')
     if category:
-        results = [item for item in results if category.lower() in item.category.lower()]
+        query = query.filter(Entry.category.ilike(f'%{category}%'))   # adjust field
 
-    # Filter by 2nd String (example: search in 'category')
     if description:
-        results = [item for item in results if description.lower() in item.description.lower()]
+        query = query.filter(Entry.description.ilike(f'%{description}%')) # adjust field
 
-    # 4. Render the template (pass the results and the current search values back)
+    # --- 4. Apply new filters ---
+    if price_min is not None:
+        query = query.filter(Entry.amount >= price_min)
+    if price_max is not None:
+        query = query.filter(Entry.amount <= price_max)
+    if category_filter:
+        query = query.filter(Entry.category == category_filter)  # exact match
+
+    # --- 5. Execute query ---
+    result = query.all()
+
+    # --- 6. Get distinct categories for the dropdown (optional) ---
+    categories = db.session.query(Entry.category).distinct().all()
+    categories = [cat[0] for cat in categories if cat[0]]  # flatten and remove None
+
+    # --- 7. Render template with all values ---
     return render_template(
-        'search.html',  # <-- CHANGE THIS to your existing HTML file name
-        results=results,
+        'search.html',        # change to your actual template name
+        results=result,
         amount=amount,
         category=category,
-        description=description
-    )
- 
+        description=description,
+        price_min=price_min,
+        price_max=price_max,
+        category_filter=category_filter,
+        #in_stock=in_stock,
+        categories=categories
+    ) 
  
 @app.route('/page3')
 @login_required

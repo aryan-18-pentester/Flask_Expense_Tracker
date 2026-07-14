@@ -20,21 +20,43 @@
     <!-- Search Form -->
     <div class="search-form">
         <form action="{{ url_for('search') }}" method="GET">
-            <div>
-                <label for="numeric">Amount</label>
-                <input type="number" name="amount" id="numeric" value="{{ numeric or '' }}">
+            <div>  
+                <label for="amount">Amount</label>
+                <input type="number" name="amount" id="numeric" value="{{ amount or '' }}">
             </div>
             <div>
-                <label for="string1">Category</label>
-                <input type="text" name="category" id="string1" value="{{ string1 or '' }}">
+                <label for="category">Category</label>
+                <input type="text" name="category" id="string1" value="{{ category or '' }}">
             </div>
             <div>
-                <label for="string2">Description</label>
-                <input type="text" name="description" id="string2" value="{{ string2 or '' }}">
+                <label for="description">Description</label>
+                <input type="text" name="description" id="string2" value="{{ description or '' }}">
             </div>
             <button type="submit">Search</button>
-        </form>
     </div>
+    <!-- ===== NEW FILTER CONTROLS (add these) ===== -->
+    <div>
+        <label>Amount range:</label>
+        <input type="number" name="price_min" placeholder="Min" value="{{ price_min or '' }}">
+        <input type="number" name="price_max" placeholder="Max" value="{{ price_max or '' }}">
+    </div>
+
+<select name="category_filter">
+    <option value="">All</option>
+
+    {% for category in categories %}
+        <option value="{{ category }}"
+            {% if category_filter == category %}selected{% endif %}>
+            {{ category }}
+        </option>
+    {% endfor %}
+</select>
+
+    <button type="submit">Apply Filters</button>
+    <a href="{{ url_for('search') }}">Clear</a>
+</form>
+
+<!-- Your results table stays unchanged -->
 
     <!-- Results -->
     <h2>Results ({{ results|length }})</h2>
