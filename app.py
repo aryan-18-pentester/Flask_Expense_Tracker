@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
-
+import json as jsonify
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -175,11 +175,14 @@ def delete(entry_id):
  
 
 @app.route('/search', methods=['GET'])
+@login_required
 def search():
     # --- 1. Read all parameters (existing + new) ---
     amount = request.args.get('amount', type=int)
     category = request.args.get('category', '').strip()
     description = request.args.get('description', '').strip()
+    sort_by = request.args.get('sort_by')
+    sort_order = request.args.get('sort_order')
             
     price_min = request.args.get('price_min', type=int)
     price_max = request.args.get('price_max', type=int)
@@ -187,7 +190,8 @@ def search():
     #in_stock = request.args.get('in_stock') == '1'
     print(request.args)
     # --- 2. Build the base query ---
-    query = Entry.query   # replace `Item` with your actual model name
+
+    query = Entry.query.filter_by(user_id=current_user.id)   # replace `Item` with your actual model name
 
     # --- 3. Apply existing filters ---
     if amount is not None:
@@ -208,16 +212,35 @@ def search():
         query = query.filter(Entry.category == category_filter)  # exact match
 
     # --- 5. Execute query ---
-    result = query.all()
+    #result = query.all()
 
     # --- 6. Get distinct categories for the dropdown (optional) ---
     categories = db.session.query(Entry.category).distinct().all()
     categories = [cat[0] for cat in categories if cat[0]]  # flatten and remove None
-
-    # --- 7. Render template with all values ---
+    # --- 7. sorting
+    
+    # Safety check
+    if sort_by not in ['amount', 'category']:
+        sort_by = 'category'
+    
+    column = getattr(Entry, sort_by)
+    
+    # IF-ELSE Logic
+    if sort_by == 'amount':
+        if sort_order == 'asc':
+            query = query.order_by(Entry.amount.asc())
+        elif sort_order == 'desc':
+            query = query.order_by(Entry.amount.desc())
+    elif sort_by == 'category':
+        if sort_order == 'asc':
+            query = query.order_by(Entry.category.asc())
+        elif sort_order == 'desc':
+            query = query.order_by(Entry.category.desc())
+    results = query.all()
+    # --- 8. Render template with all values ---
     return render_template(
         'search.html',        # change to your actual template name
-        results=result,
+        results=results,
         amount=amount,
         category=category,
         description=description,
