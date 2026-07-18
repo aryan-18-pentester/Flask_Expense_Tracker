@@ -177,6 +177,13 @@ def delete(entry_id):
 @app.route('/search', methods=['GET'])
 @login_required
 def search():
+     # Get current page number, default to 1
+    page = request.args.get('page', 1, type=int)
+    
+    # Paginate the query: 5 items per page
+    # error_out=False prevents 404 errors if page is out of range
+    pagination = Entry.query.paginate(page=page, per_page=4, error_out=False)
+
     # --- 1. Read all parameters (existing + new) ---
     amount = request.args.get('amount', type=int)
     category = request.args.get('category', '').strip()
@@ -236,10 +243,25 @@ def search():
             query = query.order_by(Entry.category.asc())
         elif sort_order == 'desc':
             query = query.order_by(Entry.category.desc())
-    results = query.all()
-    # --- 8. Render template with all values ---
+    # --- 8. Pagination
+    per_page = 5
+    # Paginate query
+    pagination = query.paginate(
+     page=page,
+     per_page=5,
+     error_out=False
+) 
+    total_pages = pagination.pages 
+    total_items = pagination.total
+    
+    results=pagination.items 
+
+    # --- 9. Render template with all values ---
     return render_template(
-        'search.html',        # change to your actual template name
+        'search.html',
+        pagination=pagination,
+        page=page, 
+        total_pages=total_pages,
         results=results,
         amount=amount,
         category=category,
