@@ -19,61 +19,31 @@ import os
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = os.environ.get(
-    "SECRET_KEY",
-    "development-secret-key"
-)
+app.config["SECRET_KEY"] = "your-secret-key-here"
 
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# ------------------------------------------------------------
+# DEFAULT DATABASE
+# User model will use this database
+# ------------------------------------------------------------
 
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
 
-# ============================================================
-# ABSOLUTE DATABASE PATHS
-# ============================================================
-
-BASE_DIR = os.path.abspath(
-    os.path.dirname(__file__)
-)
-
-INSTANCE_DIR = os.path.join(
-    BASE_DIR,
-    "instance"
-)
-
-os.makedirs(
-    INSTANCE_DIR,
-    exist_ok=True
-)
-
-USERS_DB = os.path.join(
-    INSTANCE_DIR,
-    "users.db"
-)
-
-DATA_DB = os.path.join(
-    INSTANCE_DIR,
-    "data.db"
-)
-
-
-# ============================================================
-# DATABASE CONFIGURATION
-# ============================================================
-
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "sqlite:///" + USERS_DB
-)
+# ------------------------------------------------------------
+# SECOND DATABASE
+# Entry model will use this database
+# ------------------------------------------------------------
 
 app.config["SQLALCHEMY_BINDS"] = {
-    "data_db": "sqlite:///" + DATA_DB
+    "data_db": "sqlite:///data.db"
 }
 
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
 
 # ============================================================
-# LOGIN MANAGER
+# FLASK LOGIN
 # ============================================================
 
 login_manager = LoginManager()
@@ -82,14 +52,12 @@ login_manager.init_app(app)
 
 login_manager.login_view = "login"
 
-login_manager.login_message = (
-    "Please log in to access this page."
-)
+login_manager.login_message = "Please log in to access this page."
 
 
 # ============================================================
 # USER MODEL
-# users.db
+# Stored in: users.db
 # ============================================================
 
 class User(UserMixin, db.Model):
@@ -114,8 +82,8 @@ class User(UserMixin, db.Model):
 
 
 # ============================================================
-# ENTRY MODEL
-# data.db
+# EXPENSE MODEL
+# Stored in: data.db
 # ============================================================
 
 class Entry(db.Model):
@@ -129,6 +97,7 @@ class Entry(db.Model):
         primary_key=True
     )
 
+    # This corresponds to User.id in users.db
     user_id = db.Column(
         db.Integer,
         nullable=False
@@ -151,16 +120,7 @@ class Entry(db.Model):
 
 
 # ============================================================
-# DATABASE INITIALIZATION
-# ============================================================
-
-with app.app_context():
-
-    db.create_all()
-
-
-# ============================================================
-# LOGIN USER LOADER
+# FLASK LOGIN USER LOADER
 # ============================================================
 
 @login_manager.user_loader
@@ -176,10 +136,7 @@ def load_user(user_id):
 # REGISTER
 # ============================================================
 
-@app.route(
-    "/register",
-    methods=["GET", "POST"]
-)
+@app.route("/register", methods=["GET", "POST"])
 def register():
 
     if request.method == "POST":
@@ -194,9 +151,9 @@ def register():
             ""
         )
 
-        # ----------------------------
+        # ----------------------------------------------------
         # Validation
-        # ----------------------------
+        # ----------------------------------------------------
 
         if not username:
 
@@ -214,9 +171,9 @@ def register():
                 url_for("register")
             )
 
-        # ----------------------------
-        # Check existing user
-        # ----------------------------
+        # ----------------------------------------------------
+        # Check existing username
+        # ----------------------------------------------------
 
         existing_user = User.query.filter_by(
             username=username
@@ -230,25 +187,19 @@ def register():
                 url_for("register")
             )
 
-        # ----------------------------
+        # ----------------------------------------------------
         # Create user
-        # ----------------------------
+        # ----------------------------------------------------
 
         user = User(
             username=username,
-            password_hash=generate_password_hash(
-                password
-            )
+            password_hash=generate_password_hash(password)
         )
 
         db.session.add(user)
-
         db.session.commit()
 
-        flash(
-            "Registration successful. "
-            "Please log in."
-        )
+        flash("Registration successful. Please log in.")
 
         return redirect(
             url_for("login")
@@ -263,10 +214,7 @@ def register():
 # LOGIN
 # ============================================================
 
-@app.route(
-    "/login",
-    methods=["GET", "POST"]
-)
+@app.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
@@ -296,9 +244,7 @@ def login():
                 url_for("dashboard")
             )
 
-        flash(
-            "Invalid username or password."
-        )
+        flash("Invalid username or password.")
 
     return render_template(
         "login.html"
@@ -328,28 +274,27 @@ def logout():
 @login_required
 def dashboard():
 
+    # --------------------------------------------------------
+    # Get only current user's expenses
+    # --------------------------------------------------------
+
     entries = Entry.query.filter_by(
         user_id=current_user.id
     ).all()
 
+    # --------------------------------------------------------
+    # Statistics
+    # --------------------------------------------------------
+
     stats = db.session.query(
-
         func.count(Entry.id),
-
         func.sum(Entry.amount),
-
         func.avg(Entry.amount),
-
         func.max(Entry.amount),
-
         func.min(Entry.amount)
-
     ).filter(
-
         Entry.user_id == current_user.id
-
     ).one()
-
 
     total_count = stats[0] or 0
 
@@ -369,9 +314,7 @@ def dashboard():
 
     lowest = stats[4] or 0
 
-
     return render_template(
-
         "dashboard.html",
 
         entries=entries,
@@ -394,12 +337,13 @@ def dashboard():
 # EXPENSES
 # ============================================================
 
-@app.route(
-    "/expenses",
-    methods=["GET", "POST"]
-)
+@app.route("/expenses", methods=["GET", "POST"])
 @login_required
 def expenses():
+
+    # --------------------------------------------------------
+    # ADD EXPENSE
+    # --------------------------------------------------------
 
     if request.method == "POST":
 
@@ -418,56 +362,57 @@ def expenses():
             ""
         ).strip()
 
+        # ----------------------------------------------------
+        # Validate text fields
+        # ----------------------------------------------------
 
         if not category:
 
-            flash(
-                "Category is required."
-            )
+            flash("Category is required.")
 
             return redirect(
                 url_for("expenses")
             )
-
 
         if not description:
 
-            flash(
-                "Description is required."
-            )
+            flash("Description is required.")
 
             return redirect(
                 url_for("expenses")
             )
 
+        # ----------------------------------------------------
+        # Convert amount
+        # ----------------------------------------------------
 
         try:
 
-            amount = float(
-                amount_string
-            )
+            amount = float(amount_string)
 
         except ValueError:
 
-            flash(
-                "Amount must be a valid number."
-            )
+            flash("Amount must be a valid number.")
 
             return redirect(
                 url_for("expenses")
             )
 
+        # ----------------------------------------------------
+        # Prevent negative expense
+        # ----------------------------------------------------
 
         if amount < 0:
 
-            flash(
-                "Amount cannot be negative."
-            )
+            flash("Amount cannot be negative.")
 
             return redirect(
                 url_for("expenses")
             )
 
+        # ----------------------------------------------------
+        # Create Entry
+        # ----------------------------------------------------
 
         entry = Entry(
 
@@ -480,28 +425,25 @@ def expenses():
             amount=amount
         )
 
-
         db.session.add(entry)
 
         db.session.commit()
 
-
-        flash(
-            "Expense added successfully."
-        )
+        flash("Expense added successfully.")
 
         return redirect(
             url_for("expenses")
         )
 
+    # --------------------------------------------------------
+    # GET CURRENT USER'S EXPENSES
+    # --------------------------------------------------------
 
     entries = Entry.query.filter_by(
         user_id=current_user.id
     ).all()
 
-
     return render_template(
-
         "expenses.html",
 
         active="expenses",
@@ -526,28 +468,34 @@ def edit_expense(entry_id):
         entry_id
     )
 
+    # --------------------------------------------------------
+    # Entry doesn't exist
+    # --------------------------------------------------------
 
     if entry is None:
 
-        flash(
-            "Expense not found."
-        )
+        flash("Expense not found.")
 
         return redirect(
             url_for("expenses")
         )
 
+    # --------------------------------------------------------
+    # Security:
+    # User can edit ONLY their own expense
+    # --------------------------------------------------------
 
     if entry.user_id != current_user.id:
 
-        flash(
-            "Unauthorized."
-        )
+        flash("Unauthorized.")
 
         return redirect(
             url_for("expenses")
         )
 
+    # --------------------------------------------------------
+    # POST = update
+    # --------------------------------------------------------
 
     if request.method == "POST":
 
@@ -566,12 +514,9 @@ def edit_expense(entry_id):
             ""
         ).strip()
 
-
         if not category:
 
-            flash(
-                "Category is required."
-            )
+            flash("Category is required.")
 
             return redirect(
                 url_for(
@@ -579,13 +524,10 @@ def edit_expense(entry_id):
                     entry_id=entry.id
                 )
             )
-
 
         if not description:
 
-            flash(
-                "Description is required."
-            )
+            flash("Description is required.")
 
             return redirect(
                 url_for(
@@ -593,19 +535,14 @@ def edit_expense(entry_id):
                     entry_id=entry.id
                 )
             )
-
 
         try:
 
-            amount = float(
-                amount_string
-            )
+            amount = float(amount_string)
 
         except ValueError:
 
-            flash(
-                "Amount must be a valid number."
-            )
+            flash("Amount must be a valid number.")
 
             return redirect(
                 url_for(
@@ -613,13 +550,10 @@ def edit_expense(entry_id):
                     entry_id=entry.id
                 )
             )
-
 
         if amount < 0:
 
-            flash(
-                "Amount cannot be negative."
-            )
+            flash("Amount cannot be negative.")
 
             return redirect(
                 url_for(
@@ -628,6 +562,9 @@ def edit_expense(entry_id):
                 )
             )
 
+        # ----------------------------------------------------
+        # Update
+        # ----------------------------------------------------
 
         entry.category = category
 
@@ -635,18 +572,17 @@ def edit_expense(entry_id):
 
         entry.amount = amount
 
-
         db.session.commit()
 
-
-        flash(
-            "Expense updated successfully."
-        )
+        flash("Expense updated successfully.")
 
         return redirect(
             url_for("expenses")
         )
 
+    # --------------------------------------------------------
+    # GET = show edit form
+    # --------------------------------------------------------
 
     return render_template(
         "edit_expense.html",
@@ -658,9 +594,7 @@ def edit_expense(entry_id):
 # DELETE EXPENSE
 # ============================================================
 
-@app.route(
-    "/delete/<int:entry_id>"
-)
+@app.route("/delete/<int:entry_id>")
 @login_required
 def delete(entry_id):
 
@@ -669,37 +603,39 @@ def delete(entry_id):
         entry_id
     )
 
+    # --------------------------------------------------------
+    # Entry doesn't exist
+    # --------------------------------------------------------
 
     if entry is None:
 
-        flash(
-            "Expense not found."
-        )
+        flash("Expense not found.")
 
         return redirect(
             url_for("expenses")
         )
 
+    # --------------------------------------------------------
+    # Security check
+    # --------------------------------------------------------
 
     if entry.user_id != current_user.id:
 
-        flash(
-            "Unauthorized."
-        )
+        flash("Unauthorized.")
 
         return redirect(
             url_for("expenses")
         )
 
+    # --------------------------------------------------------
+    # Delete
+    # --------------------------------------------------------
 
     db.session.delete(entry)
 
     db.session.commit()
 
-
-    flash(
-        "Expense deleted successfully."
-    )
+    flash("Expense deleted successfully.")
 
     return redirect(
         url_for("expenses")
@@ -710,12 +646,13 @@ def delete(entry_id):
 # SEARCH
 # ============================================================
 
-@app.route(
-    "/search",
-    methods=["GET"]
-)
+@app.route("/search", methods=["GET"])
 @login_required
 def search():
+
+    # --------------------------------------------------------
+    # Pagination
+    # --------------------------------------------------------
 
     page = request.args.get(
         "page",
@@ -723,63 +660,60 @@ def search():
         type=int
     )
 
+    # --------------------------------------------------------
+    # Search parameters
+    # --------------------------------------------------------
 
     amount = request.args.get(
         "amount",
         type=float
     )
 
-
     category = request.args.get(
         "category",
         ""
     ).strip()
-
 
     description = request.args.get(
         "description",
         ""
     ).strip()
 
-
-    sort_by = request.args.get(
-        "sort_by",
-        ""
-    )
-
-
-    sort_order = request.args.get(
-        "sort_order",
-        ""
-    )
-
-
     price_min = request.args.get(
         "price_min",
         type=float
     )
-
 
     price_max = request.args.get(
         "price_max",
         type=float
     )
 
-
     category_filter = request.args.get(
         "category_filter",
         ""
     ).strip()
 
+    sort_by = request.args.get(
+        "sort_by",
+        ""
+    )
+
+    sort_order = request.args.get(
+        "sort_order",
+        ""
+    )
 
     # --------------------------------------------------------
     # Base query
+    #
+    # VERY IMPORTANT:
+    # Only search the logged-in user's expenses.
     # --------------------------------------------------------
 
     query = Entry.query.filter(
         Entry.user_id == current_user.id
     )
-
 
     # --------------------------------------------------------
     # Exact amount
@@ -791,9 +725,8 @@ def search():
             Entry.amount == amount
         )
 
-
     # --------------------------------------------------------
-    # Category search
+    # Category contains
     # --------------------------------------------------------
 
     if category:
@@ -804,9 +737,8 @@ def search():
             )
         )
 
-
     # --------------------------------------------------------
-    # Description search
+    # Description contains
     # --------------------------------------------------------
 
     if description:
@@ -816,7 +748,6 @@ def search():
                 f"%{description}%"
             )
         )
-
 
     # --------------------------------------------------------
     # Minimum amount
@@ -828,7 +759,6 @@ def search():
             Entry.amount >= price_min
         )
 
-
     # --------------------------------------------------------
     # Maximum amount
     # --------------------------------------------------------
@@ -839,9 +769,8 @@ def search():
             Entry.amount <= price_max
         )
 
-
     # --------------------------------------------------------
-    # Exact category
+    # Exact category filter
     # --------------------------------------------------------
 
     if category_filter:
@@ -849,7 +778,6 @@ def search():
         query = query.filter(
             Entry.category == category_filter
         )
-
 
     # ========================================================
     # SORTING
@@ -869,7 +797,6 @@ def search():
                 Entry.amount.desc()
             )
 
-
     elif sort_by == "category":
 
         if sort_order == "asc":
@@ -884,13 +811,11 @@ def search():
                 Entry.category.desc()
             )
 
-
     # ========================================================
-    # CATEGORY LIST
+    # CATEGORY DROPDOWN
     # ========================================================
 
     categories = (
-
         db.session
         .query(Entry.category)
         .filter(
@@ -900,37 +825,29 @@ def search():
         .all()
     )
 
-
     categories = [
         category[0]
         for category in categories
         if category[0]
     ]
 
-
     # ========================================================
     # PAGINATION
     # ========================================================
 
     pagination = query.paginate(
-
         page=page,
-
         per_page=5,
-
         error_out=False
     )
 
-
     results = pagination.items
-
 
     # ========================================================
     # RENDER
     # ========================================================
 
     return render_template(
-
         "search.html",
 
         pagination=pagination,
@@ -982,21 +899,59 @@ def home():
 
 
 # ============================================================
-# RUN DIRECTLY WITH PYTHON
+# DATABASE INITIALIZATION
+# ============================================================
+
+def initialize_database():
+
+    with app.app_context():
+
+        db.create_all()
+
+        print()
+        print("======================================")
+        print("DATABASE INITIALIZATION")
+        print("======================================")
+
+        print(
+            "User database:",
+            db.engine.url
+        )
+
+        print(
+            "Entry database:",
+            db.engines["data_db"].url
+        )
+
+        print(
+            "User table:",
+            User.__tablename__
+        )
+
+        print(
+            "Entry table:",
+            Entry.__tablename__
+        )
+
+        print("======================================")
+        print()
+
+
+# ============================================================
+# RUN APPLICATION
 # ============================================================
 
 if __name__ == "__main__":
 
+    initialize_database()
+
     app.run(
-
         host="0.0.0.0",
-
         port=int(
             os.environ.get(
                 "PORT",
                 8000
             )
         ),
-
         debug=True
     )
